@@ -1,5 +1,6 @@
 package com.lahusa.mcbc_eval;
 
+import com.lahusa.mcbc_eval.util.BiomeDistribution;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -13,7 +14,9 @@ import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.RegistryKey;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 import net.minecraft.world.biome.Biome;
 import org.apache.xmlrpc.XmlRpcException;
@@ -120,7 +123,9 @@ public class MCBCEvalClient implements ClientModInitializer {
                             ChatHud chat = client.inGameHud.getChatHud();
 
                             // Print file name chat message
-                            chat.addMessage(Text.literal("Evaluating screenshot \""+filepath+"\""));
+                            chat.addMessage(Text.literal("Screenshot Evaluation").formatted(Formatting.BOLD, Formatting.UNDERLINE));
+                            chat.addMessage(Text.literal("\""+filename+"\"").formatted(Formatting.GRAY));
+                            chat.addMessage(Text.literal(" "));
 
                             // Reset window to its original dimensions
                             Window window = client.getWindow();
@@ -142,7 +147,22 @@ public class MCBCEvalClient implements ClientModInitializer {
                                 );
 
                                 // Write result to chat
-                                chat.addMessage(Text.literal(result));
+                                boolean handledCorrectGroup = false;
+                                String correctGroup = BiomeDistribution.getGroup(biome).toString().toLowerCase();
+                                for(String line : result.split(" - ")) {
+                                    MutableText text = Text.literal(line);
+                                    if(!handledCorrectGroup) {
+                                        String group = line.split(":")[0];
+                                        if(group.equals(correctGroup)) {
+                                            handledCorrectGroup = true;
+                                            text = text.formatted(Formatting.GREEN, Formatting.BOLD);
+                                        }
+                                        else {
+                                            text = text.formatted(Formatting.RED);
+                                        }
+                                    }
+                                    chat.addMessage(text);
+                                }
                             } catch (XmlRpcException e) {
                                 throw new RuntimeException(e);
                             }
