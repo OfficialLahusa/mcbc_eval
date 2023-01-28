@@ -6,17 +6,23 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.hud.ChatHud;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.client.util.Window;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
+import net.minecraft.world.biome.Biome;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.*;
 import org.lwjgl.glfw.GLFW;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
+import java.util.Optional;
 
 @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
 public class MCBCEvalClient implements ClientModInitializer {
@@ -29,6 +35,8 @@ public class MCBCEvalClient implements ClientModInitializer {
     private static EvaluationStage stage = EvaluationStage.Idle;
     // Frames rendered since framebuffer downsizing
     private static int frameCounter = 0;
+    // Biome from the last evaluation position
+    private static RegistryKey<Biome> biome;
 
     @Override
     public void onInitializeClient() {
@@ -82,6 +90,12 @@ public class MCBCEvalClient implements ClientModInitializer {
                 // Determine file path
                 String filename = "eval-"+Util.getFormattedCurrentTime() + "-" + System.currentTimeMillis() % 1000 + ".png";
                 String filepath = FabricLoader.getInstance().getGameDir().toFile() + "\\screenshots\\" + filename;
+
+                // Get correct biome for prediction evaluation
+                ClientWorld world = Objects.requireNonNull(client.world);
+                ClientPlayerEntity player = Objects.requireNonNull(client.player);
+                Optional<RegistryKey<Biome>> biomeKeyOpt = world.getBiome(player.getBlockPos()).getKey();
+                biome = biomeKeyOpt.orElse(null);
 
                 // Update state
                 stage = EvaluationStage.Capturing;
