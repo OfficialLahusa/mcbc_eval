@@ -11,20 +11,13 @@
     "website": "https://github.com/OfficialLahusa",
     "repo": "https://github.com/OfficialLahusa/mcbc_eval"
   },
-  "license": "MIT",
   "icon": "assets/mcbc_eval/icon.png",
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "client": [
       "com.lahusa.mcbc_eval.MCBCEvalClient"
-    ],
-    "main": [
-      "com.lahusa.mcbc_eval.MCBCEvalMod"
     ]
   },
-  "mixins": [
-    "mcbc_eval.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=0.14.13",
     "fabric": "*",

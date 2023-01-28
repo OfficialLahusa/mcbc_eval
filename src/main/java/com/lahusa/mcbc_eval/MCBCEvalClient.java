@@ -9,94 +9,125 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.ScreenshotRecorder;
+import net.minecraft.client.util.Window;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.*;
-import org.apache.xmlrpc.common.XmlRpcHttpRequestConfigImpl;
-import org.apache.xmlrpc.common.XmlRpcRequestProcessor;
 import org.lwjgl.glfw.GLFW;
-
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.TimeZone;
 
 @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
 public class MCBCEvalClient implements ClientModInitializer {
 
+    // RPC client for communicating with the Python CNN
     private static XmlRpcClient rpcClient;
-    private static KeyBinding classificationKey;
-    private static int stage = 0;
+    // Keybind for starting the evaluation process
+    private static KeyBinding evalKey;
+    // Current stage of evaluation
+    private static EvaluationStage stage = EvaluationStage.Idle;
+    // Frames rendered since framebuffer downsizing
     private static int frameCounter = 0;
 
     @Override
     public void onInitializeClient() {
+        // Initialize RPC client and config
         rpcClient = new XmlRpcClient();
         XmlRpcClientConfigImpl rpcClientConfig = new XmlRpcClientConfigImpl();
+
+        // Set server URL to localhost:8000 in config
         try {
             rpcClientConfig.setServerURL(new URL("http://127.0.0.1:8000"));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
+
+        // Apply config to RPC client
         rpcClient.setConfig(rpcClientConfig);
 
         // Keybind registration
-        classificationKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.mcbc_datagen.classify", // The translation key of the keybinding's name
+        evalKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.mcbc_eval.eval", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_O, // The keycode of the key
-                "category.mcbc_datagen.keybinds" // The translation key of the keybinding's category.
+                "category.mcbc_eval.keybinds" // The translation key of the keybinding's category.
         ));
 
+        // Increment frame counter when done rendering frame
         WorldRenderEvents.END.register(
                 context -> {
-                    if(stage == 1) ++frameCounter;
+                    if(stage == EvaluationStage.Downsized) ++frameCounter;
                 }
         );
 
+        // Tick end handler
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            ChatHud chat = client.inGameHud.getChatHud();
+            // Handle input
+            if (evalKey.isPressed() && stage == EvaluationStage.Idle) {
+                // Shrink window
+                Window window = client.getWindow();
+                window.toggleFullscreen();
+                window.setWindowedSize(384, 216);
 
-            if (classificationKey.isPressed()) {
-                if(stage == 0) {
-                    client.getWindow().toggleFullscreen();
-                    client.getWindow().setWindowedSize(384, 216);
-                    chat.clear(false);
-                    stage = 1;
-                    frameCounter = 0;
-                }
+                // Clear chat
+                client.inGameHud.getChatHud().clear(false);
 
+                // Update state
+                stage = EvaluationStage.Downsized;
+                frameCounter = 0;
             }
-            if(stage == 1 && frameCounter > 1) {
-                String filename = "eval-"+Util.getFormattedCurrentTime() + "-" + System.currentTimeMillis()%1000 + ".png";
-                String filepath = FabricLoader.getInstance().getGameDir().toFile().toString()+"\\screenshots\\"+filename;
-                stage = 2;
+            // Downsized frame has been rendered in the meantime
+            if(stage == EvaluationStage.Downsized && frameCounter > 1) {
+                // Determine file path
+                String filename = "eval-"+Util.getFormattedCurrentTime() + "-" + System.currentTimeMillis() % 1000 + ".png";
+                String filepath = FabricLoader.getInstance().getGameDir().toFile() + "\\screenshots\\" + filename;
 
+                // Update state
+                stage = EvaluationStage.Capturing;
+
+                // Save screenshot and register completion callback
                 ScreenshotRecorder.saveScreenshot(
                         FabricLoader.getInstance().getGameDir().toFile(),
                         filename,
                         client.getFramebuffer(),
                         (message) -> {
+                            ChatHud chat = client.inGameHud.getChatHud();
+
+                            // Print file name chat message
                             chat.addMessage(Text.literal("Evaluating screenshot \""+filepath+"\""));
+
+                            // Reactivate fullscreen
                             client.getWindow().toggleFullscreen();
+
+                            // Make call to CNN Python RPC Server
                             try {
+                                // Save call result
                                 String result = (String) rpcClient.execute(
                                         "handle_image",
                                         new Object[] {
                                                  filepath
                                         }
                                 );
+
+                                // Write result to chat
                                 chat.addMessage(Text.literal(result));
                             } catch (XmlRpcException e) {
                                 throw new RuntimeException(e);
                             }
-                            stage = 3;
+
+                            // Update state
+                            stage = EvaluationStage.Idle;
                         }
                 );
             }
-            else if(stage == 3) {
-                stage = 0;
-            }
         });
+    }
+
+    // Internal state enum
+    private enum EvaluationStage {
+        Idle,
+        Downsized,
+        Capturing
     }
 }
