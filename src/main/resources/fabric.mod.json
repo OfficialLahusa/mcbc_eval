@@ -16,7 +16,7 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "com.lahusa.mcbc_eval.MCBCEvalModClient"
+      "com.lahusa.mcbc_eval.MCBCEvalClient"
     ],
     "main": [
       "com.lahusa.mcbc_eval.MCBCEvalMod"
