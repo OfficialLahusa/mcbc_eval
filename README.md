@@ -7,3 +7,9 @@ Both ends communicate using the [XML-RPC Protocol](http://xmlrpc.com/), but are 
 
 ### **Please Note:** This repository does not include the pretrained weights of the CNN, only its architecture.
 It is necessary to download the [pretrained weights (252 MB)](https://www.dropbox.com/s/9864380t9npznma/mcbc_weights.h5?dl=1) prior to running the Python CNN backend. Save the file under the subpath `/cnn/mcbc_weights.h5` of this workspace.
+
+# Team
+Sven Schreiber (https://github.com/svenschreiber) \
+Lasse Huber-Saffer (https://github.com/OfficialLahusa) \
+Nico Hädicke (https://github.com/Reshxram) \
+Lena Kloock
