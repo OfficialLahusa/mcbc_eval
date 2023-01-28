@@ -37,6 +37,9 @@ public class MCBCEvalClient implements ClientModInitializer {
     private static int frameCounter = 0;
     // Biome from the last evaluation position
     private static RegistryKey<Biome> biome;
+    private static boolean wasFullScreen = false;
+    private static int originalWindowWidth;
+    private static int originalWindowHeight;
 
     @Override
     public void onInitializeClient() {
@@ -73,9 +76,17 @@ public class MCBCEvalClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             // Handle input
             if (evalKey.isPressed() && stage == EvaluationStage.Idle) {
+
                 // Shrink window
                 Window window = client.getWindow();
-                window.toggleFullscreen();
+                wasFullScreen = window.isFullscreen();
+                if(wasFullScreen) {
+                    window.toggleFullscreen();
+                }
+                else {
+                    originalWindowWidth = window.getWidth();
+                    originalWindowHeight = window.getHeight();
+                }
                 window.setWindowedSize(384, 216);
 
                 // Clear chat
@@ -111,8 +122,14 @@ public class MCBCEvalClient implements ClientModInitializer {
                             // Print file name chat message
                             chat.addMessage(Text.literal("Evaluating screenshot \""+filepath+"\""));
 
-                            // Reactivate fullscreen
-                            client.getWindow().toggleFullscreen();
+                            // Reset window to its original dimensions
+                            Window window = client.getWindow();
+                            if(wasFullScreen) {
+                                window.toggleFullscreen();
+                            }
+                            else {
+                                window.setWindowedSize(originalWindowWidth, originalWindowHeight);
+                            }
 
                             // Make call to CNN Python RPC Server
                             try {
