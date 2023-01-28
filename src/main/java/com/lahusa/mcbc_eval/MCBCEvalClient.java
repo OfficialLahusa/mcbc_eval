@@ -81,7 +81,7 @@ public class MCBCEvalClient implements ClientModInitializer {
                             client.getWindow().toggleFullscreen();
                             try {
                                 String result = (String) rpcClient.execute(
-                                        "handleImage",
+                                        "handle_image",
                                         new Object[] {
                                                  filepath
                                         }

@@ -1,21 +1,15 @@
 import sys
-
+import os
+import numpy as np
+from xmlrpc.server import SimpleXMLRPCServer
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import Conv2D
 from keras.layers import MaxPooling2D
-from keras.layers import Dropout
 from keras.layers import BatchNormalization
 from keras.layers import ReLU
-from keras.callbacks import EarlyStopping
-from keras.callbacks import ModelCheckpoint
-from skimage.io import imread, imsave
-from skimage.transform import resize
-from xmlrpc.server import SimpleXMLRPCServer
-import os
-import numpy as np
-import glob
+from skimage.io import imread
 
 wkdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -44,7 +38,7 @@ labels = ["aquatic", "arid", "forest", "plains", "snowy"]
 
 with SimpleXMLRPCServer(("localhost", 8000)) as server:
     @server.register_function
-    def handleImage(path):
+    def handle_image(path):
         print(path)
         img = imread(path)[:, :, 0:3]
         img_downscaled = img
