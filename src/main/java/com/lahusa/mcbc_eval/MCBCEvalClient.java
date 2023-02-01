@@ -1,6 +1,7 @@
 package com.lahusa.mcbc_eval;
 
 import com.lahusa.mcbc_eval.util.BiomeDistribution;
+import com.lahusa.mcbc_eval.util.BiomeGroup;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -148,12 +149,13 @@ public class MCBCEvalClient implements ClientModInitializer {
 
                                 // Write result to chat
                                 boolean handledCorrectGroup = false;
-                                String correctGroup = BiomeDistribution.getGroup(biome).toString().toLowerCase();
+                                BiomeGroup correctGroup = BiomeDistribution.getGroup(biome);
+                                String correctGroupStr = correctGroup != null? correctGroup.toString().toLowerCase() : "";
                                 for(String line : result.split(" - ")) {
                                     MutableText text = Text.literal(line);
                                     if(!handledCorrectGroup) {
-                                        String group = line.split(":")[0];
-                                        if(group.equals(correctGroup)) {
+                                        String groupStr = line.split(":")[0];
+                                        if(groupStr.equals(correctGroupStr)) {
                                             handledCorrectGroup = true;
                                             text = text.formatted(Formatting.GREEN, Formatting.BOLD);
                                         }
