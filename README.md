@@ -18,4 +18,4 @@ It is necessary to download the [pretrained weights (252 MB)](https://www.dropbo
 Sven Schreiber (https://github.com/svenschreiber) \
 Lasse Huber-Saffer (https://github.com/OfficialLahusa) \
 Nico Hädicke (https://github.com/Reshxram) \
-Lena Kloock
+Lena Kloock (https://github.com/LenaKloock)
